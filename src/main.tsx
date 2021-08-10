@@ -15,6 +15,10 @@ import Setting from './pages/setting';
 import Planning from './pages/planning';
 import SetPlanning from './pages/setPlanning';
 import Usage from 'pages/Usage';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
+import { View, Text } from 'react-native';
 
 console.disableYellowBox = true;
 
@@ -93,7 +97,19 @@ class MainLayout extends NavigatorLayout<Props> {
         break;
     }
 
-    return component;
+    return (
+      <View
+        style={{
+          display: 'flex',
+          height: '100%',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
+        {component}
+        <Text style={{ backgroundColor: 'red' }}>asdf</Text>
+      </View>
+    );
   }
 }
 

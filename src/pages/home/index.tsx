@@ -1,13 +1,16 @@
 import React from 'react';
 import { TYSdk, Utils, IconFont, Divider } from 'tuya-panel-kit';
 import { useState } from 'react';
-import Modal from 'react-native-modal';
-import ModalContent from './components/ModalContent';
+// import Modal from 'react-native-modal';
+// import ModalContent from './components/ModalContent';
+import CircularPicker from 'react-native-circular-picker';
 // import ContentLayout from './contentLayout';
 // import ConsoleLayout from './consoleLayout';
 // import { LinearGradient } from 'tuya-panel-kit';
 // import { Button } from 'react-native-elements';
 // import { Icon } from 'react-native-vector-icons/Icon';
+import Wave from 'react-wavify';
+import { HcdWaveView } from '../../components/react-native-art-hcdwave';
 import {
   View,
   Text,
@@ -21,16 +24,10 @@ import {
 const { convertX: cx, convertY: cy } = Utils.RatioUtils;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
-
+const circularRadius = (windowWidth - 80).toFixed(0);
 const MainLayout = () => {
-  // var modifiers = {
-  //   weekend: function (weekday) {
-  //     return weekday == 0 || weekday == 6;
-  //   },
-  // };
-
   const [modalVisible, setModalVisible] = useState(false);
-
+  const [waterPercent, setWaterPercent] = useState(50);
   const toggleModal = () => {
     setModalVisible(!modalVisible);
   };
@@ -39,8 +36,28 @@ const MainLayout = () => {
     TYSdk.Navigator.push({ id: 'planning' });
   };
 
+  const [price, setPrice] = useState(0);
+  const handleChange = v => {
+    console.log('------ : ', v);
+    setPrice(v.toFixed(0));
+  };
+
+  const changeNavigation = props => {
+    TYSdk.Navigator.push({ id: props });
+  };
+
+  const NavigatorButton = props => {
+    return (
+      <TouchableOpacity onPress={() => changeNavigation(props)}>
+        <View>
+          <Text>111</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <View style={[{ flex: 1 }, styles.container]}>
+    <View style={styles.container}>
       <View flexDirection="row" style={{ marginVertical: 20, justifyContent: 'center' }}>
         <View>
           <Text accessibilityLabel="HomeScene_TopView_Mode" style={[styles.text, { fontSize: 14 }]}>
@@ -63,11 +80,24 @@ const MainLayout = () => {
           Wednesday 18:30
         </Text>
       </View>
-      <View flexDirection="row" style={{ marginVertical: 20, justifyContent: 'center' }}>
+      <View
+        flexDirection="row"
+        style={{ marginVertical: 20, justifyContent: 'center', zIndex: 1, padding: 5 }}
+      >
         <View style={styles.circle}>
+          <View style={{ position: 'absolute' }}>
+            {console.log('Wid:', circularRadius)}
+            <HcdWaveView
+              surfaceWidth={365}
+              surfaceHeigth={365}
+              powerPercent={waterPercent}
+              type="dc"
+              style={{ backgrounundColor: '#FF7800' }}
+            ></HcdWaveView>
+          </View>
           <View flexDirection="row" style={{ alignItems: 'flex-end' }}>
             <View>
-              <Text style={styles.litre}>5 </Text>
+              <Text style={styles.litre}>{(60 * waterPercent) / 100}</Text>
             </View>
             <View>
               <Text style={{ color: 'grey', fontSize: 20 }}>L</Text>
@@ -76,7 +106,7 @@ const MainLayout = () => {
           <Text>lastest usage</Text>
           <View height={50} />
           <View width={windowWidth / 2}>
-            <Divider height={1} />
+            <Divider height={1} color="grey" />
           </View>
           <View style={{ marginVertical: 10 }}>
             <Text>Current mode</Text>
@@ -84,20 +114,80 @@ const MainLayout = () => {
           <Text style={{ fontSize: 20, fontWeight: '500' }}>Closed</Text>
         </View>
       </View>
-      <View flexDirection="row" style={{ marginTop: 40, justifyContent: 'center' }}>
-        <TouchableOpacity style={styles.button} onPress={() => toggleModal()}>
+      <View
+        flexDirection="row"
+        style={{ marginTop: 40, justifyContent: 'center', zIndex: 1, padding: 5 }}
+      >
+        {/* <TouchableOpacity style={styles.button} onPress={() => toggleModal()}> */}
+        <TouchableOpacity style={styles.button} onPress={() => navToPlanning()}>
           <Text style={{ fontSize: 20, color: 'white', fontWeight: '500' }}>Open</Text>
         </TouchableOpacity>
       </View>
-      <View>
-        <Modal
-          testID={'modal'}
-          isVisible={modalVisible}
-          onBackdropPress={() => setModalVisible(false)}
-        >
-          <ModalContent onPress={() => setModalVisible(false)} />
-        </Modal>
-      </View>
+      {modalVisible ? (
+        <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View style={styles.modal}></View>
+          </TouchableWithoutFeedback>
+          <View
+            style={{
+              position: 'absolute',
+              backgroundColor: '#FFFFFF',
+              zIndex: 1000,
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 10,
+              borderRadius: 20,
+            }}
+          >
+            <Text style={[styles.text__big, { padding: 10 }]}>SetDuration</Text>
+            <View style={styles.circle}>
+              <CircularPicker
+                size={300}
+                // steps={[8.35, 16.7, 25, 33.35, 41.7, 50, 58.35, 66.7, 75, 83.35, 91.7, 100]}
+                steps={[15, 30, 45, 60]}
+                gradients={{
+                  0: ['#62C2A1', '#62C2A1'],
+                }}
+                strokeWidth={30}
+                borderColor="#CCC"
+                onChange={val => handleChange(val)}
+              ></CircularPicker>
+
+              <View style={{ position: 'absolute' }}>
+                <Text
+                  style={{
+                    textAlign: 'center',
+                    fontSize: 30,
+                    marginBottom: 8,
+                    zIndex: 1001,
+                    color: '#787878',
+                  }}
+                >
+                  {price}
+                </Text>
+                <Text style={{ textAlign: 'center', zIndex: 1001 }}>minutes</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setModalVisible(false);
+              }}
+            >
+              <View>
+                <Text style={{ fontSize: 18 }}>Cancel</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, { marginVertical: 10 }]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={{ fontSize: 20, color: 'white', fontWeight: '500' }}>Start</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <View></View>
+      )}
     </View>
   );
 };
@@ -106,7 +196,15 @@ const styles = StyleSheet.create({
   container: {
     padding: 10,
     backgroundColor: '#F8F8F8',
-    height: windowHeight,
+    flex: 1,
+  },
+  bottomNavStyle: {
+    position: 'absolute',
+    bottom: 0,
+    width: windowWidth,
+    height: 60,
+    backgroundColor: '#EEE',
+    justifyContent: 'space-between',
   },
   customBackdrop: {
     flex: 1,
@@ -124,15 +222,17 @@ const styles = StyleSheet.create({
     width: windowWidth - 80,
     height: windowWidth - 80,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modal: {
+    backgroundColor: '#00000055',
+    width: windowWidth,
+    // height: windowHeight,
+    zIndex: 999,
   },
   button: {
     borderRadius: 30,
@@ -156,47 +256,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 5,
   },
-  section__mode: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: cx(16),
-    paddingVertical: cy(6),
-    borderRadius: cy(15),
-  },
-  section__quality: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: cy(11),
-  },
-  section__fault: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: cy(36),
-    paddingHorizontal: cx(18),
-    backgroundColor: '#FF813E',
-  },
-  quality__left: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  quality__right: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: cx(6),
-    paddingHorizontal: cx(6),
-  },
   text: {
     color: '#333',
   },
   text__big: {
-    fontSize: cx(18),
-    marginRight: cx(6),
+    fontSize: cx(22),
+    fontWeight: 'bold',
+    color: '#565656',
   },
   litre: {
     color: 'grey',

@@ -6,6 +6,7 @@ import { TYSdk, Theme, DevInfo, DpValue } from 'tuya-panel-kit';
 import { Connect } from '@components';
 import { actions } from '@models';
 import { theme } from '@config';
+import { ModalPortal } from 'react-native-modals';
 
 interface Props {
   devInfo: DevInfo;
@@ -88,6 +89,7 @@ const composeLayout = (store: Store, component: React.ComponentType) => {
               }}
             </Connect>
           </Theme>
+          <ModalPortal />
         </Provider>
       );
     }
