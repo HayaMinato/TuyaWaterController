@@ -29,7 +29,7 @@ const data = {
 };
 const Usage = () => {
   return (
-    <View flex={1} style={styles.container}>
+    <View style={styles.container}>
       <View flexDirection="row" style={{ justifyContent: 'center' }}>
         <Text style={styles.heading}>Water usage</Text>
         <Text style={styles.normalText}>(litres)</Text>

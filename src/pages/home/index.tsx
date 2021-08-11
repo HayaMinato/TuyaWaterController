@@ -28,6 +28,8 @@ const circularRadius = (windowWidth - 80).toFixed(0);
 const MainLayout = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [waterPercent, setWaterPercent] = useState(50);
+  const [waterState, setWaterState] = useState(false);
+
   const toggleModal = () => {
     setModalVisible(!modalVisible);
   };
@@ -85,65 +87,58 @@ const MainLayout = () => {
         style={{ marginVertical: 20, justifyContent: 'center', zIndex: 1, padding: 5 }}
       >
         <View style={styles.circle}>
-          <View style={{ position: 'absolute' }}>
-            {console.log('Wid:', circularRadius)}
-            <HcdWaveView
-              surfaceWidth={365}
-              surfaceHeigth={365}
-              powerPercent={waterPercent}
-              type="dc"
-              style={{ backgrounundColor: '#FF7800' }}
-            ></HcdWaveView>
-          </View>
-          <View flexDirection="row" style={{ alignItems: 'flex-end' }}>
-            <View>
-              <Text style={styles.litre}>{(60 * waterPercent) / 100}</Text>
+          {waterState ? (
+            <View style={{ position: 'absolute' }}>
+              <HcdWaveView
+                surfaceWidth={365}
+                surfaceHeigth={365}
+                powerPercent={waterPercent}
+                type="dc"
+                style={{ backgrounundColor: '#FF7800' }}
+              ></HcdWaveView>
             </View>
-            <View>
-              <Text style={{ color: 'grey', fontSize: 20 }}>L</Text>
+          ) : (
+            <View style={{ alignItems: 'center' }}>
+              <View flexDirection="row" style={{ alignItems: 'flex-end' }}>
+                <View>
+                  <Text style={styles.litre}>{(60 * waterPercent) / 100}</Text>
+                </View>
+                <View>
+                  <Text style={{ color: 'grey', fontSize: 20 }}>L</Text>
+                </View>
+              </View>
+              <Text>lastest usage</Text>
+              <View height={50} />
+              <View width={windowWidth / 2}>
+                <Divider height={1} color="grey" />
+              </View>
+              <View style={{ marginVertical: 10 }}>
+                <Text>Current mode</Text>
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: '500' }}>Closed</Text>
             </View>
-          </View>
-          <Text>lastest usage</Text>
-          <View height={50} />
-          <View width={windowWidth / 2}>
-            <Divider height={1} color="grey" />
-          </View>
-          <View style={{ marginVertical: 10 }}>
-            <Text>Current mode</Text>
-          </View>
-          <Text style={{ fontSize: 20, fontWeight: '500' }}>Closed</Text>
+          )}
         </View>
       </View>
       <View
         flexDirection="row"
-        style={{ marginTop: 40, justifyContent: 'center', zIndex: 1, padding: 5 }}
+        style={{ marginTop: 25, justifyContent: 'center', zIndex: 1, padding: 5 }}
       >
         {/* <TouchableOpacity style={styles.button} onPress={() => toggleModal()}> */}
-        <TouchableOpacity style={styles.button} onPress={() => navToPlanning()}>
+        <TouchableOpacity style={styles.button} onPress={() => toggleModal()}>
           <Text style={{ fontSize: 20, color: 'white', fontWeight: '500' }}>Open</Text>
         </TouchableOpacity>
       </View>
       {modalVisible ? (
-        <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ position: 'absolute', alignItems: 'center' }}>
           <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
             <View style={styles.modal}></View>
           </TouchableWithoutFeedback>
-          <View
-            style={{
-              position: 'absolute',
-              backgroundColor: '#FFFFFF',
-              zIndex: 1000,
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: 10,
-              borderRadius: 20,
-            }}
-          >
+          <View style={styles.modalView}>
             <Text style={[styles.text__big, { padding: 10 }]}>SetDuration</Text>
             <View style={styles.circle}>
               <CircularPicker
                 size={300}
-                // steps={[8.35, 16.7, 25, 33.35, 41.7, 50, 58.35, 66.7, 75, 83.35, 91.7, 100]}
                 steps={[15, 30, 45, 60]}
                 gradients={{
                   0: ['#62C2A1', '#62C2A1'],
@@ -154,17 +149,7 @@ const MainLayout = () => {
               ></CircularPicker>
 
               <View style={{ position: 'absolute' }}>
-                <Text
-                  style={{
-                    textAlign: 'center',
-                    fontSize: 30,
-                    marginBottom: 8,
-                    zIndex: 1001,
-                    color: '#787878',
-                  }}
-                >
-                  {price}
-                </Text>
+                <Text style={styles.priceText}>{price}</Text>
                 <Text style={{ textAlign: 'center', zIndex: 1001 }}>minutes</Text>
               </View>
             </View>
@@ -179,9 +164,12 @@ const MainLayout = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, { marginVertical: 10 }]}
-              onPress={() => setModalVisible(false)}
+              onPress={() => {
+                setModalVisible(false);
+                setWaterState(true);
+              }}
             >
-              <Text style={{ fontSize: 20, color: 'white', fontWeight: '500' }}>Start</Text>
+              <Text style={styles.buttonText}>Start</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -197,6 +185,11 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: '#F8F8F8',
     flex: 1,
+  },
+  buttonText: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: '500',
   },
   bottomNavStyle: {
     position: 'absolute',
@@ -231,8 +224,18 @@ const styles = StyleSheet.create({
   modal: {
     backgroundColor: '#00000055',
     width: windowWidth,
-    // height: windowHeight,
+    height: windowHeight,
     zIndex: 999,
+  },
+  modalView: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 20,
+    marginTop: windowHeight * 0.1,
   },
   button: {
     borderRadius: 30,
@@ -268,6 +271,13 @@ const styles = StyleSheet.create({
     color: 'grey',
     fontSize: 65,
     alignSelf: 'flex-end',
+  },
+  priceText: {
+    textAlign: 'center',
+    fontSize: 30,
+    marginBottom: 8,
+    zIndex: 1001,
+    color: '#787878',
   },
 });
 
