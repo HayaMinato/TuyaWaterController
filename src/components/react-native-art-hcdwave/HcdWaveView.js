@@ -83,7 +83,7 @@ export class HcdWaveView extends Component {
     // 左边刻度
     const leftLinePath = new ART.Path();
     var radius = this.props.surfaceWidth / 2;
-    for (var i = 0, angle = Math.PI * 0.5, tmp, len; i <= 30 * this.props.powerPercent / 100; i++) {
+    for (var i = 0, angle = Math.PI * 0.5, tmp, len; i <= 30 * this.props.powerPercent / 60; i++) {
       len = 12;
       tmp = radius - 5;
       leftLinePath.moveTo(
@@ -99,7 +99,7 @@ export class HcdWaveView extends Component {
     // 右边刻度
     const rightLinePath = new ART.Path();
     var radius = this.props.surfaceWidth / 2;
-    for (var i = 0, angle = Math.PI * 0.5, tmp, len; i <= 30 * this.props.powerPercent / 100; i++) {
+    for (var i = 0, angle = Math.PI * 0.5, tmp, len; i <= 30 * this.props.powerPercent / 60; i++) {
       len = 12;
       tmp = radius - 5;
       rightLinePath.moveTo(
@@ -126,15 +126,15 @@ export class HcdWaveView extends Component {
         {/* {this.artDrawBg()} */}
         {/* <ART.Shape d={leftLinePath} stroke="#FCEE5D" strokeWidth={2} fill={"red"} />
         <ART.Shape d={rightLinePath} stroke="#FCEE5D" strokeWidth={2} fill={'red'} /> */}
-        <ART.Shape d={path} fill={linearGradient} />
+        <ART.Shape d={path} fill="white" />
         {this.artDrawWave()}
-        <ART.Text strokeWidth={1}
+        {/* <ART.Text strokeWidth={1}
           stroke="#FFFFFF"
           alignment="center"
           x={this.props.surfaceHeigth / 2}
           y={this.props.surfaceHeigth / 2 - 30}
           fill="#FFFFFF"
-          font={`30px "Helvetica Neue", "Helvetica", Arial`}>{this.props.powerPercent + '%'}</ART.Text>
+          font={`30px "Helvetica Neue", "Helvetica", Arial`}>{this.props.powerPercent}</ART.Text> */}
         {/* <ART.Text strokeWidth={1} 
           stroke="#FFFFFF" 
           alignment="center" 
@@ -207,8 +207,8 @@ export class HcdWaveView extends Component {
       .arc(0, circleRadius * 2, circleRadius)
       .arc(0, -circleRadius * 2, circleRadius)
       .close();
-    let colors = ["white", "#58D3F7",];
-    let linearGradient = new ART.LinearGradient(colors, 0, 20, 90, 280);
+    let colors = ["white", "#7FE6FB",];
+    let linearGradient = new ART.LinearGradient(colors, 0, 127, 230, 251);
 
     var scale = radius / 95
     var flashPath = new ART.Path()
@@ -235,7 +235,7 @@ export class HcdWaveView extends Component {
     var powerPercent = parseInt(this.props.powerPercent)
     const radius = this.props.surfaceWidth / 2 - 30;
 
-    if (powerPercent < 100) {
+    if (powerPercent < 60) {
       const centerX = this.props.surfaceWidth / 2
       const centerY = this.props.surfaceHeigth / 2
 
@@ -243,13 +243,16 @@ export class HcdWaveView extends Component {
       const b = this.state.b
       const amplitude = 10
 
-      var currentLinePointY = radius * 2 + 30 - radius * 2 * (this.props.powerPercent / 100.0)
+      var currentLinePointY = radius * 2 + 30 - radius * 2 * (this.props.powerPercent / 60.0)
       var startX = 30
       var endX = this.props.surfaceWidth - startX
 
       var startPoint, endPoint
 
       const linePath = new ART.Path();
+
+      let colors = ["white", "#58D3F7"];
+      let linearGradient = new ART.LinearGradient(colors, 0, 20, 90, 280);
       for (var x = startX; x <= endX; x++) {
         var y = a * Math.sin(x / 180 * Math.PI + 4 * b / Math.PI) * amplitude + currentLinePointY
         if (y < centerY) {
@@ -275,7 +278,7 @@ export class HcdWaveView extends Component {
       linePath.arc(-2 * radius, 0, radius)
       linePath.close()
       return (
-        <ART.Shape d={linePath} strokeWidth={0} fill={'#b7e3fb'} />
+        <ART.Shape d={linePath} strokeWidth={0} fill={linearGradient} />
       )
     } else {
       const linePath = new ART.Path()
@@ -284,7 +287,7 @@ export class HcdWaveView extends Component {
         .arc(0, -radius * 2, radius)
         .close();
       return (
-        <ART.Shape d={linePath} strokeWidth={0} fill={'#b7e3fb'} />
+        <ART.Shape d={linePath} strokeWidth={0} fill={linearGradient} />
       )
     }
   }

@@ -133,7 +133,6 @@ class MainLayout extends NavigatorLayout<Props, IState> {
       if (this.state.selectedSlide != props.slideId) {
         TYSdk.Navigator.push({ id: props.naviName });
       }
-      console.log('slideID:', props.slideId);
       this.setState({ selectedSlide: props.slideId });
     };
 

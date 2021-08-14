@@ -1,15 +1,8 @@
 import React from 'react';
-import { TYSdk, Utils, IconFont, Divider } from 'tuya-panel-kit';
+import _ from 'lodash';
+import { TYSdk, Utils, IconFont, Divider, DpSchema, DpValue } from 'tuya-panel-kit';
 import { useState } from 'react';
-// import Modal from 'react-native-modal';
-// import ModalContent from './components/ModalContent';
 import CircularPicker from 'react-native-circular-picker';
-// import ContentLayout from './contentLayout';
-// import ConsoleLayout from './consoleLayout';
-// import { LinearGradient } from 'tuya-panel-kit';
-// import { Button } from 'react-native-elements';
-// import { Icon } from 'react-native-vector-icons/Icon';
-import Wave from 'react-wavify';
 import { HcdWaveView } from '../../components/react-native-art-hcdwave';
 import {
   View,
@@ -18,54 +11,82 @@ import {
   StyleSheet,
   Dimensions,
   TouchableWithoutFeedback,
-  SafeAreaView,
+  Image,
 } from 'react-native';
-
+import { useSelector } from '@models';
+import { useDispatch } from 'react-redux';
+import { actions } from '@models';
+import Res from '@res';
+import {
+  BallIndicator,
+  BarIndicator,
+  DotIndicator,
+  MaterialIndicator,
+  PacmanIndicator,
+  PulseIndicator,
+  SkypeIndicator,
+  UIActivityIndicator,
+  WaveIndicator,
+} from 'react-native-indicators';
 const { convertX: cx, convertY: cy } = Utils.RatioUtils;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 const circularRadius = (windowWidth - 80).toFixed(0);
-const MainLayout = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [waterPercent, setWaterPercent] = useState(50);
-  const [waterState, setWaterState] = useState(false);
+interface DpProps {
+  value: string | number | boolean;
+  code: string;
+}
 
+const MainLayout = () => {
+  const dispatch = useDispatch();
+  const dpState = useSelector(state => state.dpState);
+  const dpSchema = useSelector(state => state.devInfo.schema);
+  console.log('dpState-->', dpState);
+  console.log('dpSchema-->', dpSchema);
+  if (_.isEmpty(dpState)) {
+    return null;
+  }
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [workStatus, setWorkStatus] = useState(0);
+  const [waterTime, setWaterTime] = useState(0);
   const toggleModal = () => {
     setModalVisible(!modalVisible);
   };
 
-  const navToPlanning = () => {
-    TYSdk.Navigator.push({ id: 'planning' });
-  };
-
-  const [price, setPrice] = useState(0);
   const handleChange = v => {
-    console.log('------ : ', v);
-    setPrice(v.toFixed(0));
+    setWaterTime(v.toFixed(0));
   };
 
-  const changeNavigation = props => {
-    TYSdk.Navigator.push({ id: props });
+  const updateDpValue = (props: DpProps) => {
+    const { code, value } = props;
+    console.log('code', code, 'value', value);
+    dispatch(actions.common.updateDp({ [code]: value }));
   };
 
-  const NavigatorButton = props => {
-    return (
-      <TouchableOpacity onPress={() => changeNavigation(props)}>
-        <View>
-          <Text>111</Text>
-        </View>
-      </TouchableOpacity>
-    );
+  const CurrentMode = () => {
+    switch (workStatus) {
+      case 0:
+        return <Text style={styles.mbText}>Closed</Text>;
+      case 1:
+        return <Text style={styles.mbText}>Opened</Text>;
+      case 2:
+        return <Text style={styles.mbText}>Automatic</Text>;
+      case 3:
+        return <Text style={styles.mbText}>Delay</Text>;
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View flexDirection="row" style={{ marginVertical: 20, justifyContent: 'center' }}>
-        <View>
-          <Text accessibilityLabel="HomeScene_TopView_Mode" style={[styles.text, { fontSize: 14 }]}>
-            Battery Full
-          </Text>
-        </View>
+      <View flexDirection="row" style={styles.center}>
+        <Image source={Res.battery_icon} />
+        <Text
+          accessibilityLabel="HomeScene_TopView_Mode"
+          style={[styles.text, { fontSize: 14, marginLeft: 10 }]}
+        >
+          Battery Full : {dpState['BatteryCapacity']}
+        </Text>
       </View>
       <View flexDirection="row" style={styles.matchCenter}>
         <View flexDirection="column" style={styles.matchCenter}>
@@ -79,55 +100,63 @@ const MainLayout = () => {
       </View>
       <View flexDirection="row" style={styles.matchCenter}>
         <Text accessibilityLabel="HomeScene_TopView_Mode" style={[styles.text, { fontSize: 14 }]}>
-          Wednesday 18:30
+          {dpState['next_time']}
         </Text>
       </View>
-      <View
-        flexDirection="row"
-        style={{ marginVertical: 20, justifyContent: 'center', zIndex: 1, padding: 5 }}
-      >
+      <View flexDirection="row" style={styles.circleBlock}>
         <View style={styles.circle}>
-          {waterState ? (
+          {workStatus == 1 ? (
             <View style={{ position: 'absolute' }}>
               <HcdWaveView
                 surfaceWidth={365}
                 surfaceHeigth={365}
-                powerPercent={waterPercent}
+                powerPercent={waterTime}
                 type="dc"
                 style={{ backgrounundColor: '#FF7800' }}
               ></HcdWaveView>
             </View>
           ) : (
-            <View style={{ alignItems: 'center' }}>
-              <View flexDirection="row" style={{ alignItems: 'flex-end' }}>
-                <View>
-                  <Text style={styles.litre}>{(60 * waterPercent) / 100}</Text>
-                </View>
-                <View>
-                  <Text style={{ color: 'grey', fontSize: 20 }}>L</Text>
-                </View>
-              </View>
-              <Text>lastest usage</Text>
-              <View height={50} />
-              <View width={windowWidth / 2}>
-                <Divider height={1} color="grey" />
-              </View>
-              <View style={{ marginVertical: 10 }}>
-                <Text>Current mode</Text>
-              </View>
-              <Text style={{ fontSize: 20, fontWeight: '500' }}>Closed</Text>
-            </View>
+            <View></View>
           )}
+          <View style={{ alignItems: 'center', paddingTop: windowHeight * 0.1 }}>
+            <View flexDirection="row" style={{ alignItems: 'center' }}>
+              <View>
+                <Text style={styles.litre}>{dpState['Flow']}</Text>
+              </View>
+              <View style={styles.ml_1}>
+                {workStatus == 1 ? <></> : <Text style={styles.lStyle}>L</Text>}
+              </View>
+            </View>
+            {workStatus == 1 ? <Text>minutes remaining</Text> : <Text>lastest usage</Text>}
+            <View height={40} />
+            <View width={windowWidth * 0.6}>
+              <Divider height={1} color="grey" />
+            </View>
+            <View style={{ marginVertical: 10 }}>
+              <Text>Current mode</Text>
+            </View>
+            {CurrentMode()}
+          </View>
         </View>
       </View>
-      <View
-        flexDirection="row"
-        style={{ marginTop: 25, justifyContent: 'center', zIndex: 1, padding: 5 }}
-      >
-        {/* <TouchableOpacity style={styles.button} onPress={() => toggleModal()}> */}
-        <TouchableOpacity style={styles.button} onPress={() => toggleModal()}>
-          <Text style={{ fontSize: 20, color: 'white', fontWeight: '500' }}>Open</Text>
-        </TouchableOpacity>
+      <View flexDirection="row" style={styles.buttonView}>
+        {workStatus == 1 ? (
+          <TouchableOpacity
+            style={[styles.unactiveButton, {}]}
+            onPress={() => {
+              setWorkStatus(0);
+              updateDpValue({ code: 'ManualSwitch', value: false });
+              updateDpValue({ code: 'ManualTimer', value: 0 });
+              updateDpValue({ code: 'WorkStatus', value: 0 });
+            }}
+          >
+            <Text style={styles.unactiveText}>Close</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.activeButton} onPress={() => toggleModal()}>
+            <Text style={styles.openTextStyle}>Open</Text>
+          </TouchableOpacity>
+        )}
       </View>
       {modalVisible ? (
         <View style={{ position: 'absolute', alignItems: 'center' }}>
@@ -149,7 +178,7 @@ const MainLayout = () => {
               ></CircularPicker>
 
               <View style={{ position: 'absolute' }}>
-                <Text style={styles.priceText}>{price}</Text>
+                <Text style={styles.priceText}>{waterTime}</Text>
                 <Text style={{ textAlign: 'center', zIndex: 1001 }}>minutes</Text>
               </View>
             </View>
@@ -157,16 +186,20 @@ const MainLayout = () => {
               onPress={() => {
                 setModalVisible(false);
               }}
+              style={{ marginVertical: 10 }}
             >
               <View>
                 <Text style={{ fontSize: 18 }}>Cancel</Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.button, { marginVertical: 10 }]}
+              style={[styles.activeButton, { marginVertical: 10 }]}
               onPress={() => {
                 setModalVisible(false);
-                setWaterState(true);
+                setWorkStatus(1);
+                updateDpValue({ code: 'ManualSwitch', value: true });
+                updateDpValue({ code: 'ManualTimer', value: +waterTime });
+                updateDpValue({ code: 'WorkStatus', value: 1 });
               }}
             >
               <Text style={styles.buttonText}>Start</Text>
@@ -191,22 +224,15 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '500',
   },
-  bottomNavStyle: {
-    position: 'absolute',
-    bottom: 0,
-    width: windowWidth,
-    height: 60,
-    backgroundColor: '#EEE',
-    justifyContent: 'space-between',
+  center: {
+    marginVertical: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   customBackdrop: {
     flex: 1,
     backgroundColor: '#87BBE0',
     alignItems: 'center',
-  },
-  customBackdropText: {
-    marginTop: 10,
-    fontSize: 17,
   },
   circle: {
     borderRadius: 1000,
@@ -221,11 +247,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  circleBlock: {
+    marginVertical: 20,
+    justifyContent: 'center',
+    zIndex: 1,
+    padding: 5,
+  },
   modal: {
     backgroundColor: '#00000055',
     width: windowWidth,
     height: windowHeight,
     zIndex: 999,
+  },
+  mbText: {
+    fontSize: 20,
+    fontWeight: '500',
   },
   modalView: {
     position: 'absolute',
@@ -237,7 +273,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginTop: windowHeight * 0.1,
   },
-  button: {
+  activeButton: {
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
@@ -255,9 +291,36 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+  unactiveButton: {
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    backgroundColor: '#FFF',
+    borderColor: '#EEE',
+    width: windowWidth / 1.5,
+    height: 50,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  buttonView: {
+    marginVertical: 0,
+    justifyContent: 'center',
+    zIndex: 1,
+    padding: 10,
+  },
   matchCenter: {
     justifyContent: 'center',
     marginVertical: 5,
+  },
+  ml_1: {
+    marginLeft: 5,
   },
   text: {
     color: '#333',
@@ -270,7 +333,7 @@ const styles = StyleSheet.create({
   litre: {
     color: 'grey',
     fontSize: 65,
-    alignSelf: 'flex-end',
+    lineHeight: 65,
   },
   priceText: {
     textAlign: 'center',
@@ -278,6 +341,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     zIndex: 1001,
     color: '#787878',
+  },
+  lStyle: {
+    color: 'grey',
+    fontSize: 25,
+    lineHeight: 65,
+  },
+  openTextStyle: {
+    fontSize: 20,
+    color: 'white',
+    fontWeight: '500',
+  },
+  unactiveText: {
+    fontSize: 20,
+    color: '#787878',
+    fontWeight: '500',
   },
 });
 

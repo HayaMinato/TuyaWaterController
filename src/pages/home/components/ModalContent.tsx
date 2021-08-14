@@ -9,8 +9,6 @@ type Props = {
 const ModalContent = (props: Props) => {
   const [price, setPrice] = useState(10);
   const handleChange = v => {
-    console.log('-----------');
-    console.log('in->', v);
     setPrice((v * 20).toFixed(0));
   };
 

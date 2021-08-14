@@ -32,7 +32,6 @@ type blockProps = {
 };
 
 const weekdayPicker = (BlockProps: blockProps) => {
-  console.log('BlockProps:', BlockProps);
   let selectedValues1 = [];
   const [defualtSelectedIndex, setDefualtSelectedIndex] = useState(BlockProps.selectedDay);
 

@@ -1,12 +1,6 @@
 import React, { Component } from 'react';
-import {
-  LineChart,
-  BarChart,
-  PieChart,
-  ProgressChart,
-  ContributionGraph,
-  StackedBarChart,
-} from 'react-native-chart-kit';
+import { BarChart } from 'react-native-chart-kit';
+import _ from 'lodash';
 import {
   View,
   Text,
@@ -17,6 +11,7 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
+import { useSelector } from '@models';
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 const data = {
@@ -28,6 +23,11 @@ const data = {
   ],
 };
 const Usage = () => {
+  const dpState = useSelector(state => state.dpState);
+  const dpSchema = useSelector(state => state.devInfo.schema);
+  if (_.isEmpty(dpState)) {
+    return null;
+  }
   return (
     <View style={styles.container}>
       <View flexDirection="row" style={{ justifyContent: 'center' }}>
@@ -46,7 +46,7 @@ const Usage = () => {
       </ScrollView>
       <View style={styles.block}>
         <Text>Lastest Usage</Text>
-        <Text>2.5 Litres</Text>
+        <Text>{dpState['Flow']} Litres</Text>
       </View>
     </View>
   );

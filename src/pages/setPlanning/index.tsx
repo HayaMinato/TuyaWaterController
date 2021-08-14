@@ -12,32 +12,12 @@ import {
 } from 'react-native';
 import { SelectMultipleGroupButton } from 'react-native-selectmultiple-button';
 import _ from 'lodash';
-import Res from '@res';
+import { useSelector } from '@models';
+import { useDispatch } from 'react-redux';
+import { actions } from '@models';
 import BitView from 'pages/home/bitView';
-import Svg, {
-  Circle,
-  Ellipse,
-  G,
-  TSpan,
-  TextPath,
-  Path,
-  Polygon,
-  Polyline,
-  Line,
-  Rect,
-  Use,
-  Symbol,
-  Defs,
-  LinearGradient,
-  RadialGradient,
-  Stop,
-  ClipPath,
-  Pattern,
-  Mask,
-} from 'react-native-svg';
+import Svg, { Circle, Path, Rect, LinearGradient, Stop } from 'react-native-svg';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-// import Svg, { Rect, LinearGradient, RadialGradient } from 'react-native-svg';
-const { convertX: cx, convertY: cy } = Utils.RatioUtils;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
@@ -59,23 +39,40 @@ type Props = {
   pulseWatering: string;
   pulseBreak: string;
 };
+interface DpProps {
+  value: string | number | boolean;
+  code: string;
+}
 
 type timePickerProps = {
   title: string;
   time: string;
 };
 function SetPlanning(Props: Props) {
+  const dispatch = useDispatch();
+
+  const dpState = useSelector(state => state.dpState);
+  const dpSchema = useSelector(state => state.devInfo.schema);
+  if (_.isEmpty(dpState)) {
+    return null;
+  }
+
   let selectedValues1 = [];
 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
   const showDatePicker = () => {
-    console.log('picker');
     setDatePickerVisibility(true);
   };
 
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
+  };
+
+  const updateDpValue = (props: DpProps) => {
+    const { code, value } = props;
+    console.log('code', code, 'value', value);
+    dispatch(actions.common.updateDp({ [code]: value }));
   };
 
   const handleConfirm = date => {

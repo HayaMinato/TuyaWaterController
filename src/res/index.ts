@@ -10,6 +10,7 @@ const calendar_b_icon = require('./calendar_b.png');
 const calendar_g_icon = require('./calendar_g.png');
 const chart_b_icon = require('./chart_b.png');
 const chart_g_icon = require('./chart_g.png');
+const battery_icon = require('./battery.png');
 
 export default {
   button,
@@ -23,4 +24,5 @@ export default {
   calendar_g_icon,
   chart_b_icon,
   chart_g_icon,
+  battery_icon,
 };
