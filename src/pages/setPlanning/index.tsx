@@ -10,6 +10,8 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
+
+import base64 from 'base64-js';
 import { SelectMultipleGroupButton } from 'react-native-selectmultiple-button';
 import _ from 'lodash';
 import { useSelector } from '@models';
@@ -18,6 +20,7 @@ import { actions } from '@models';
 import BitView from 'pages/home/bitView';
 import Svg, { Circle, Path, Rect, LinearGradient, Stop } from 'react-native-svg';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { element } from 'prop-types';
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
@@ -32,12 +35,7 @@ const multipleGroupData = [
 ];
 
 type Props = {
-  startTime: string;
-  durationTime: string;
-  selectedDays: any;
-  wateringType: number;
-  pulseWatering: string;
-  pulseBreak: string;
+  planId: number;
 };
 interface DpProps {
   value: string | number | boolean;
@@ -48,11 +46,19 @@ type timePickerProps = {
   title: string;
   time: string;
 };
-function SetPlanning(Props: Props) {
+function SetPlanning(Props) {
+  console.log('Setplanning:', Props);
   const dispatch = useDispatch();
 
   const dpState = useSelector(state => state.dpState);
   const dpSchema = useSelector(state => state.devInfo.schema);
+
+  const [startHour, setStartHour] = useState(20);
+  const [startMin, setStartMin] = useState(0);
+  const [workingHour, setWorkingHour] = useState(1);
+  const [workingMin, setWorkingMin] = useState(0);
+  const [planId, setPlanId] = useState(0);
+
   if (_.isEmpty(dpState)) {
     return null;
   }
@@ -79,15 +85,16 @@ function SetPlanning(Props: Props) {
     console.warn('A date has been picked: ', date);
     hideDatePicker();
   };
+
   // const [defualtSelectedIndex, setDefualtSelectedIndex] = useState(Props.selectedDays);
-  const [defualtSelectedIndex, setDefualtSelectedIndex] = useState([0, 1, 3]);
+  const [defualtSelectedIndex, setDefualtSelectedIndex] = useState([]);
 
   defualtSelectedIndex.map(item => {
     selectedValues1.push(multipleGroupData[item].value);
   });
 
   const [multipleSelectedData_group, setMultipleSelectedData_group] = useState(selectedValues1);
-  const [wateringType, setWateringType] = useState(Props.wateringType ? Props.wateringType : 0);
+  const [wateringType, setWateringType] = useState(0);
 
   const weekValuesChange = selectedValues => {
     setMultipleSelectedData_group(selectedValues);

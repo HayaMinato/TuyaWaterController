@@ -1,5 +1,5 @@
-import React, { Component, useState } from 'react';
-import { TYSdk, Utils, IconFont, Divider } from 'tuya-panel-kit';
+import React, { Component, useState, useEffect } from 'react';
+import { TYSdk, Utils, IconFont, Divider, DpSchema, DpValue } from 'tuya-panel-kit';
 import {
   View,
   Text,
@@ -12,26 +12,77 @@ import {
 import SwitchButton from '../../components/SwitchButton';
 import WeekdayPicker from '../../components/WeekdayPicker';
 import _ from 'lodash';
-// import { Icon } from 'react-native-vector-icons/Icon';
-// import WeekdayPicker from "react-weekday-picker";
+import { useSelector } from '@models';
+import { useDispatch } from 'react-redux';
+import { actions } from '@models';
+import {
+  toWeekArrayFromByteArray,
+  toByteArrayFromHexString,
+  toWeekNumberArrayFromString,
+} from './model';
 
 const { convertX: cx, convertY: cy } = Utils.RatioUtils;
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-function settingPage() {
-  // const [planA, setPlanA] = useState(false);
-  // const [planB, setPlanB] = useState(false);
-  // const [planC, setPlanC] = useState(false);
-  const [delayDay, setDelayDay] = useState(0);
+interface DpProps {
+  value: string | number | boolean;
+  code: string;
+}
+function planningPage() {
+  const dispatch = useDispatch();
+  const dpState = useSelector(state => state.dpState);
+  const dpSchema = useSelector(state => state.devInfo.schema);
+  const [planAStatus, setPlanAStatus] = useState(false);
+  // let multipleWeekData: any = [];
+  const [multipleWeek1Data, setMultipleWeek1Data] = useState<Array<number>>([0]);
+  const [multipleWeek2Data, setMultipleWeek2Data] = useState<Array<number>>([0]);
+  const [multipleWeek3Data, setMultipleWeek3Data] = useState<Array<number>>([0]);
+  let multipleWeek1Binary: any = [];
+  let multipleWeek2Binary: any = [];
+  let multipleWeek3Binary: any = [];
+  let byte1Array = new Array<string>();
+  if (_.isEmpty(dpState)) {
+    return null;
+  }
+  const receivedTimerDelay = dpState['TimerDelay'];
+  const [delayDay, setDelayDay] = useState(parseInt(receivedTimerDelay.toString(), 10) / 24);
+
   const DelayDaySet = id => {
     if (id != delayDay) {
       setDelayDay(id);
+      updateDpValue({ code: 'TimerDelay', value: (id * 24).toString() });
     } else {
       setDelayDay(0);
+      updateDpValue({ code: 'TimerDelay', value: '0' });
     }
   };
 
+  const updateDpValue = (props: DpProps) => {
+    const { code, value } = props;
+    dispatch(actions.common.updateDp({ [code]: value }));
+  };
+
+  useEffect(() => {
+    // //Timer1 Test
+    byte1Array = toByteArrayFromHexString(dpState['Timer1']);
+    console.log(byte1Array);
+    // multipleWeek1Binary = toWeekArrayFromByteArray(byte1Array[5]);
+    // setMultipleWeek1Data(multipleWeek1Binary.slice(0, multipleWeek1Binary.length - 1));
+    // setPlanAStatus(multipleWeek1Binary[multipleWeek1Binary.length - 1] == '1' ? true : false);
+    //Timer2 Test
+    // let byte2Array = new Array<string>();
+    // byte2Array = toByteArrayFromHexString(dpState['Timer2']);
+    // multipleWeek2Binary = toWeekArrayFromByteArray(byte2Array[6]);
+    // setMultipleWeek1Data(multipleWeek2Binary.slice(0, multipleWeek2Binary.length - 1));
+    // setPlanAStatus(multipleWeek2Binary[multipleWeek2Binary.length - 1] == '1' ? true : false);
+    // //Timer3 Test
+    // let byte3Array = new Array<string>();
+    // byte3Array = toByteArrayFromHexString(dpState['Timer3']);
+    // multipleWeek3Binary = toWeekArrayFromByteArray(byte3Array[7]);
+    // setMultipleWeek1Data(multipleWeek3Binary.slice(0, multipleWeek3Binary.length - 1));
+    // setPlanAStatus(multipleWeek3Binary[multipleWeek3Binary.length - 1] == '1' ? true : false);
+  }, []);
   return (
     <View style={styles.container}>
       <ScrollView>
@@ -45,10 +96,10 @@ function settingPage() {
             subPlanName="Pluse"
             startTime="18:00"
             duration="5:00"
-            selectedDay={[1, 2, 3]}
-            active={true}
+            selectedDay={multipleWeek1Data}
+            active={planAStatus}
           ></WeekdayPicker>
-          <WeekdayPicker
+          {/* <WeekdayPicker
             planId={2}
             planName="Plan B"
             subPlanName="Continuous"
@@ -65,7 +116,7 @@ function settingPage() {
             duration="5:00"
             selectedDay={[1, 2, 3]}
             active={false}
-          ></WeekdayPicker>
+          ></WeekdayPicker> */}
         </View>
         <View style={styles.delayBlock}>
           <Text style={styles.heading}>Delay all programs</Text>
@@ -187,4 +238,4 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 });
-export default settingPage;
+export default planningPage;

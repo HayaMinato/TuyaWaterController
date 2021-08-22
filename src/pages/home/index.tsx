@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { TYSdk, Utils, IconFont, Divider, DpSchema, DpValue } from 'tuya-panel-kit';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CircularPicker from 'react-native-circular-picker';
 import { HcdWaveView } from '../../components/react-native-art-hcdwave';
 import {
@@ -17,6 +17,7 @@ import { useSelector } from '@models';
 import { useDispatch } from 'react-redux';
 import { actions } from '@models';
 import Res from '@res';
+import base64 from 'base64-js';
 import {
   BallIndicator,
   BarIndicator,
@@ -41,6 +42,7 @@ const MainLayout = () => {
   const dispatch = useDispatch();
   const dpState = useSelector(state => state.dpState);
   const dpSchema = useSelector(state => state.devInfo.schema);
+  let receivedBinaryArray = new Array<string>();
   console.log('dpState-->', dpState);
   console.log('dpSchema-->', dpSchema);
   if (_.isEmpty(dpState)) {
@@ -48,8 +50,9 @@ const MainLayout = () => {
   }
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [workStatus, setWorkStatus] = useState(0);
+  const [workStatus, setWorkStatus] = useState(dpState['WorkStatus'] ? dpState['WorkStatus'] : 0);
   const [waterTime, setWaterTime] = useState(0);
+
   const toggleModal = () => {
     setModalVisible(!modalVisible);
   };
@@ -76,6 +79,30 @@ const MainLayout = () => {
         return <Text style={styles.mbText}>Delay</Text>;
     }
   };
+
+  function byteString(n) {
+    if (n < 0 || n > 255 || n % 1 !== 0) {
+      throw new Error(n + ' does not fit in a byte');
+    }
+    return ('000000000' + n.toString(2)).substr(-8);
+  }
+
+  const toByteArrayFromHexString = (hexVal: any) => {
+    let str = hexVal.toString();
+    let hexArr = new Array();
+    for (let i = 0; i < str.length; i += 2) {
+      hexArr.push(str[i] + '' + str[i + 1]);
+    }
+    for (let i = 0; i < hexArr.length; i++) {
+      var hexNum = parseInt(hexArr[i], 16);
+      receivedBinaryArray.push(byteString(hexNum));
+    }
+    console.log('Received:', receivedBinaryArray);
+  };
+
+  useEffect(() => {
+    toByteArrayFromHexString(dpState['Timer1']);
+  });
 
   return (
     <View style={styles.container}>
@@ -121,7 +148,11 @@ const MainLayout = () => {
           <View style={{ alignItems: 'center', paddingTop: windowHeight * 0.1 }}>
             <View flexDirection="row" style={{ alignItems: 'center' }}>
               <View>
-                <Text style={styles.litre}>{dpState['Flow']}</Text>
+                {workStatus == 1 ? (
+                  <Text style={styles.litre}>{dpState['LeftTime']}</Text>
+                ) : (
+                  <Text style={styles.litre}>{dpState['Flow']}</Text>
+                )}
               </View>
               <View style={styles.ml_1}>
                 {workStatus == 1 ? <></> : <Text style={styles.lStyle}>L</Text>}

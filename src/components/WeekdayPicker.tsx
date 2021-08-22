@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { TYSdk, Utils, IconFont, Divider } from 'tuya-panel-kit';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import SwitchButton from './SwitchButton';
-import _ from 'lodash';
 import icons from 'icons';
+
+import _, { slice } from 'lodash';
+import { useSelector } from '@models';
+import { useDispatch } from 'react-redux';
+import { actions } from '@models';
+import Svg, { Circle, Path, Rect, LinearGradient, Stop } from 'react-native-svg';
+import {
+  toWeekArrayFromByteArray,
+  toByteArrayFromHexString,
+  toWeekBinaryStringFromWeekString,
+  toHexStringFromBinaryArray,
+} from '../pages/planning/model';
 import { SelectMultipleGroupButton } from 'react-native-selectmultiple-button';
 // import SvgUri from 'react-native-svg-uri';
 // import RightArrow from '../img/svg/chevronright.svg';
@@ -21,35 +32,93 @@ const multipleGroupData = [
 ];
 const ios_blue = '#007AFF';
 
+interface DpProps {
+  value: string | number | boolean;
+  code: string;
+}
+
 type blockProps = {
   planId: number;
   planName: string;
   subPlanName: string;
   startTime: string;
   duration: string;
-  selectedDay: any;
+  selectedDay: Array<number>;
   active: boolean;
 };
 
 const weekdayPicker = (BlockProps: blockProps) => {
+  console.log('BlockProps:---', BlockProps);
   let selectedValues1 = [];
-  const [defualtSelectedIndex, setDefualtSelectedIndex] = useState(BlockProps.selectedDay);
+  const [defualtSelectedIndex, setDefualtSelectedIndex] = useState<Object>([]);
+  const [switch1Active, setSwitch1Active] = useState<boolean>(false);
+  const [switch2Active, setSwitch2Active] = useState<boolean>(false);
+  const [switch3Active, setSwitch3Active] = useState<boolean>(false);
 
-  defualtSelectedIndex.map(item => {
-    selectedValues1.push(multipleGroupData[item].value);
-  });
+  const dispatch = useDispatch();
+
+  const dpState = useSelector(state => state.dpState);
+  const dpSchema = useSelector(state => state.devInfo.schema);
+
+  const [startHour, setStartHour] = useState(20);
+  const [startMin, setStartMin] = useState(0);
+  const [workingHour, setWorkingHour] = useState(1);
+  const [workingMin, setWorkingMin] = useState(0);
+  const [planId, setPlanId] = useState(0);
+
+  if (_.isEmpty(dpState)) {
+    return null;
+  }
+  // defualtSelectedIndex.map(item => {
+  //   selectedValues1.push(multipleGroupData[item].value);
+  // });
 
   const [multipleSelectedData_group, setMultipleSelectedData_group] = useState(selectedValues1);
-  const [switchActive, setSwitchActive] = useState(BlockProps.active);
 
   const weekValuesChange = selectedValues => {
     setMultipleSelectedData_group(selectedValues);
+    console.log('LiveWeek:', toWeekBinaryStringFromWeekString(selectedValues, switch1Active));
+
+    const updatedHexVal = toHexStringFromBinaryArray(
+      toWeekBinaryStringFromWeekString(selectedValues, switch1Active),
+      5,
+      dpState['Timer1'].toString()
+    );
+    updateDpValue({ code: 'Timer1', value: updatedHexVal });
   };
 
   const navToSetPlanning = () => {
-    TYSdk.Navigator.push({ id: 'setPlanning' });
+    TYSdk.Navigator.push({ id: 'setPlanning', planId: BlockProps.planId });
   };
 
+  const updateDpValue = (props: DpProps) => {
+    const { code, value } = props;
+    dispatch(actions.common.updateDp({ [code]: value }));
+  };
+
+  useEffect(() => {
+    setSwitch1Active(BlockProps.active);
+    setDefualtSelectedIndex(BlockProps.selectedDay.slice());
+  }, [BlockProps.active, BlockProps.selectedDay]);
+
+  const setPlanningActive = (planIndex: number) => {
+    switch (planIndex) {
+      case 1:
+        setSwitch1Active(BlockProps.active);
+        break;
+      case 2:
+        setSwitch2Active(BlockProps.active);
+        break;
+      case 3:
+        // setSwitch1Active(BlaockProps.active);
+        break;
+    }
+  };
+
+  console.log('ActiveFlg:', BlockProps.active);
+  console.log('ActiveSwitch:', switch1Active);
+  console.log('selectedDay:', BlockProps.selectedDay);
+  console.log('defualtSelectedIndex:', defualtSelectedIndex);
   return (
     <View style={[styles.block]}>
       <TouchableOpacity onPress={() => navToSetPlanning()}>
@@ -61,12 +130,19 @@ const weekdayPicker = (BlockProps: blockProps) => {
             {BlockProps.subPlanName}
           </Text>
           <View flex={6}></View>
-          {/* <SvgUri
-            width="40"
-            height="40"
-            fill="black"
-            source={require('../img/svg/chevronright.svg')}
-          /> */}
+          <Svg width="31" height="31">
+            <Path
+              x="5"
+              y="8"
+              fill="none"
+              stroke="#787878"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+              d="M1.061 12.334l5.637-5.637-5.637-5.636"
+              data-name="Icon feather-chevron-right"
+            ></Path>
+          </Svg>
         </View>
         <Divider height={1} />
       </TouchableOpacity>
@@ -78,15 +154,17 @@ const weekdayPicker = (BlockProps: blockProps) => {
         <View flex={1}></View>
         <SwitchButton
           accessibilityLabel="switch"
-          value={switchActive}
-          onValueChange={value => setSwitchActive(value)}
+          value={switch1Active}
+          onValueChange={value => setSwitch1Active(value)}
           onTintColor="#44DB5E"
           onThumbTintColor="#fff"
         />
       </View>
       <View>
+        {console.log('>>>>', defualtSelectedIndex)}
+        {console.log('>>>>', typeof defualtSelectedIndex)}
         <SelectMultipleGroupButton
-          defaultSelectedIndexes={defualtSelectedIndex}
+          defaultSelectedIndexes={BlockProps.selectedDay}
           containerViewStyle={{ justifyContent: 'center', padding: 0 }}
           highLightStyle={{
             borderColor: 'white',
@@ -108,7 +186,9 @@ const weekdayPicker = (BlockProps: blockProps) => {
           textStyle={{
             fontSize: 13,
           }}
-          onSelectedValuesChange={selectedValues => weekValuesChange(selectedValues)}
+          onSelectedValuesChange={selectedValues => {
+            weekValuesChange(selectedValues);
+          }}
           group={multipleGroupData}
         />
       </View>
@@ -151,7 +231,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     padding: 5,
   },
-
   blockSmallText: {
     fontSize: 14,
     padding: 5,
